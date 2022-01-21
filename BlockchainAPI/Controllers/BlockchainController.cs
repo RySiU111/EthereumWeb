@@ -26,9 +26,9 @@ namespace BlockchainAPI.Controllers
 
         [HttpGet]
         [Route("blockNumber")]
-        public async Task<BigInteger> GetBlockNumber()
+        public async Task<int> GetBlockNumber()
         {
-            return await _blockchainService.GetBlockNumber();
+            return (int)await _blockchainService.GetBlockNumber();
         }
 
         [HttpGet]

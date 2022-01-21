@@ -52,7 +52,7 @@ namespace BlockchainAPI
 
             app.UseAuthorization();
             app.UseStaticFiles();
-
+            app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
