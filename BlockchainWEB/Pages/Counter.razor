@@ -1,41 +1,185 @@
-@page "/counter"
-@using EthereumLib
-@using Nethereum.Web3
-@* @inject IBlockchainService BlockchainService *@
+@page "/blockchain"
+@using Newtonsoft.Json.Linq
+@inject HttpClient httpClient;
 
-<h1>Counter</h1>
-@* <h3>Is Ready: @BlockchainService.IsReady</h3> *@
-@* <h3>Is Ready: @(blockchainManager != null)</h3> *@
+<h1>Blockchain information</h1>
+<div>
+    Current block count: @currentCount
+    <button class="btn btn-primary" @onclick="GetBlockCount" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Refresh</button>
+</div>
+<hr>
+<div>
+    <h5>Download blocks</h5>
+    <input @bind="howManyBlockToDownload" @bind:event="oninput" style="width: 100px"/> <button class="btn btn-primary" @onclick="GetBlocks" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Download</button>
+</div>
+@if (!jsonObj.HasValues)
+{
+    <p>Here will be downloaded block/blocks</p>
+}
+else
+{
+    <textarea style="width:100%; font-size:10px" rows="15" value="@jsonObj.ToString()"/>
+}
+<hr>
+<div style="margin-top: 5px; width: 100%;">
+    <div style="float:left; text-align:center; width: 50%">
+        <button class="btn btn-primary" @onclick="DeployBlock" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Deploy factory</button>
+    </div>
+    <div style="float:right; text-align:center; width: 50%">
+        <button class="btn btn-primary" @onclick="DeployTransaction" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Deploy contract</button>
+    </div>
+</div>
+<br/><br/>
+<table style="width: 100%">
+    <tr style="border: 1px solid black; border-collapse: collapse">
+        <th style="border: 1px solid black; border-collapse: collapse; text-align: center">Deployed factory</th>
+        <th style="border: 1px solid black; border-collapse: collapse; text-align: center">Deployed contract</th>
+    </tr>
+    <tr style="border: 1px solid black; border-collapse: collapse">
+        <td style="border: 1px solid black; border-collapse: collapse">
+                @if(deployedBlockValue == string.Empty)
+                {
+                    <p>Deploy new factory.</p>
+                }
+                else
+                {
+                    <textarea style="margin-top: 1%; width:100%; font-size:12px" rows="18" value="@deployedBlockValue"/>
+                }
+        </td>
+        <td style="border: 1px solid black; border-collapse: collapse">
+                @if(deployedTransactionValue == string.Empty)
+                {
+                    <p>Deploy new contract.</p>
+                }
+                else
+                {
+                    <textarea style="margin-top: 1%; width:100%; font-size:12px" rows="18" value="@deployedTransactionValue"/>
+                }
+        </td>
+    </tr>
+</table>
+<hr>
+<p><button class="btn btn-primary" @onclick="GetContracts" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Get Contracts</button></p>
+@foreach(var contract in ContractsIds)
+{
+    <p>Contract id: @contract</p>
+}
+<p>Total: @ContractsIds.Length</p>
+<hr>
+<p>
+    <h5>Add model to contract</h5>
+    Contract ID: <input @bind="addModelContractId" @bind:event="oninput" style="width: 500px"/><button class="btn btn-primary" @onclick="AddModel" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Add model</button>
+    @if(addedModelResponse == string.Empty)
+        {
+        }
+        else
+        {
+            <p>Response:</p>
+            <textarea style="margin-top: 1%; width:100%; font-size:12px" rows="10" value="@addedModelResponse"/>
+        }
+</p>
+<hr>
+<p>
+    <h5>Get models from contract</h5>
+    Contract ID: <input @bind="getModelContractId" @bind:event="oninput" style="width: 500px"/><button class="btn btn-primary" @onclick="GetModels" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Get models</button>
+    @if(!getModelsResponse.HasValues)
+        {
+        }
+        else
+        {
+            <textarea style="width:100%; font-size:10px" rows="25" value="@getModelsResponse.ToString()"/>
+        }
+</p>
+<hr>
+<p>
+    <h5>Get model by contract and model IDs</h5>
+    <table>
+        <tr>
+            <td>
+                Contract ID:
+            </td>
+            <td>
+                <input @bind="getModelContractId2" @bind:event="oninput" style="width: 500px"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Model ID: 
+            </td>
+            <td>
+                <input @bind="getModelModelId" @bind:event="oninput" style="width: 500px"/>
+            </td>
+        </tr>
+    </table>
+    <button class="btn btn-primary" @onclick="GetModel" style="height: 30px; font-size: 12px; justify-content: center; align-items: center">Get model</button>
+    @if(!getModelResponse.HasValues)
+        {
+        }
+        else
+        {
+            <textarea style="width:100%; font-size:10px" rows="11" value="@getModelResponse.ToString()"/>
+        }
+</p>
 
-<p>Current count: @currentCount</p>
-
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
-    private BigInteger currentCount = 0;
-    private BlockchainManager blockchainManager;
-    private Web3 _web3;
+    private BigInteger currentCount;
+    private string url = "https://localhost:5001/";
+    private int howManyBlockToDownload = 1;
+    JArray jsonObj = new JArray();
+    private string deployedBlockValue = "";
+    private string deployedTransactionValue = "";
+    private string addModelContractId = "";
+    private string addedModelResponse = "";
+    private string getModelContractId = "";
+    private JArray getModelsResponse = new JArray();
+    private string getModelContractId2 = "";
+    private string getModelModelId = "";
+    private JObject getModelResponse = new JObject();
 
-    private async Task IncrementCount()
+    private string[] ContractsIds = {};
+
+    private async Task GetBlockCount()
     {
-        @* currentCount = await BlockchainService.GetBlockNumber(); *@
-        currentCount = await blockchainManager.GetBlockNumber();
-        @* var blockNumber = await _web3.Eth.Blocks.GetBlockNumber.SendRequestAsync();
-        currentCount = blockNumber.Value; *@
+        currentCount = await httpClient.GetFromJsonAsync<int>(url + "Blockchain/blockNumber");
     }
 
-    protected async override void OnInitialized()
+    private async Task GetContracts()
     {
-        try
-        {
-            var keyStoreEncryptedJson =
-                @"{""address"":""12890d2cce102216644c59dae5baed380d84830c"",""Crypto"":{""cipher"":""aes-128-ctr"",""ciphertext"":""a1c02524d5b9de2b05a265fbec8a3e36d8dfc4920ceef453ebe95b8eb8c70d95"",""cipherparams"":{""iv"":""aefddc737e457e8e96ac3d8987dcc444""},""kdf"":""scrypt"",""kdfparams"":{""dklen"":32,""n"":262144,""p"":1,""r"":8,""salt"":""f895a52dfc1520030c739d606fe0a96f75f09892b4c501b5add2cfdc80ba7a2e""},""mac"":""fecb89f8e07b1a222d95d71373084f1d69fbbb27f31ef7a92626d64973dbec2e""},""id"":""997cce35-189c-4b05-8083-81d4b3dd3f35"",""version"":3}"; 
-            blockchainManager = new BlockchainManager(keyStoreEncryptedJson, "password");
-        }
-        catch (Exception e)
-        {
-            System.Console.WriteLine(e.Message);
-        }
-
+        ContractsIds = await httpClient.GetFromJsonAsync<string[]>(url + "Blockchain/modelContracts");
+    }
+    private async Task DeployBlock()
+    {
+        var response = await httpClient.PostAsJsonAsync(url + "Blockchain/modelFactory/deploy", "");
+        deployedBlockValue = await response.Content.ReadAsStringAsync();
+    }
+    private async Task DeployTransaction()
+    {
+        var response = await httpClient.PostAsJsonAsync(url + "Blockchain/modelContract/deploy", "");
+        deployedTransactionValue = await response.Content.ReadAsStringAsync();
+    }
+    private async Task AddModel()
+    {
+        var response = await httpClient.PostAsJsonAsync(url + "Blockchain/modelContract/" + addModelContractId + "/model", "");
+        addedModelResponse = await response.Content.ReadAsStringAsync();
+    }
+    private async Task GetModels()
+    {    
+        var response = await httpClient.GetAsync(url + "Blockchain/modelContract/" + getModelContractId + "/models");
+        getModelsResponse = JArray.Parse(await response.Content.ReadAsStringAsync());
+    }
+    private async Task GetModel()
+    {    
+        var response = await httpClient.GetAsync(url + "Blockchain/modelContract/" + getModelContractId2 + "/model/" + getModelModelId);
+        getModelResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
+    }
+    private async Task GetBlocks()
+    {    
+        var response = await httpClient.GetAsync(url + "Blockchain/blocks/" + howManyBlockToDownload);
+        jsonObj = JArray.Parse(await response.Content.ReadAsStringAsync());
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await GetBlockCount();
     }
 }
