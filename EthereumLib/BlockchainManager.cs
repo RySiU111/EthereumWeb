@@ -15,6 +15,7 @@ namespace EthereumLib
     public class BlockchainManager
     {
         private readonly Web3 _web3;
+        public string ContractAddress { get; set; }
 
         ///<summary>
         ///
@@ -37,7 +38,7 @@ namespace EthereumLib
             return await _web3.Personal.ListAccounts.SendRequestAsync();            
         }
 
-        public async Task<List<BlockWithTransactions>> GetBlocks(int latestBlocksRange, CancellationToken cancellationToken) {
+        public async Task<List<BlockWithTransactions>> GetBlocks(int latestBlocksRange, CancellationToken cancellationToken = default) {
             var blocks = new List<BlockWithTransactions>();
 
             var processor = _web3.Processing.Blocks.CreateBlockProcessor(steps => {
@@ -52,13 +53,6 @@ namespace EthereumLib
                 cancellationToken, 
                 fromBlockNumber);
 
-            System.Console.WriteLine(blocks.Count);
-
-            foreach (var b in blocks)
-            {
-                System.Console.WriteLine(b.Number);
-            }
-
             return blocks;
         }
 
@@ -72,8 +66,7 @@ namespace EthereumLib
 
         public async Task<TransactionReceipt> DeployModelContract()
         {
-            var _contractAddress = "0x2a212f50a2a020010ea88cc33fc4c333e6a5c5c4";
-            var service = new ModelFactoryService(_web3, _contractAddress);
+            var service = new ModelFactoryService(_web3, ContractAddress);
 
             var deployModelContractFunction = new DeployModelContractFunction();
             var transactionReceipt = await service.DeployModelContractRequestAndWaitForReceiptAsync();
@@ -83,16 +76,14 @@ namespace EthereumLib
 
         public async Task<List<string>> GetDeployedModelContracts()
         {
-            var _contractAddress = "0x2a212f50a2a020010ea88cc33fc4c333e6a5c5c4";
-            var service = new ModelFactoryService(_web3, _contractAddress);
+            var service = new ModelFactoryService(_web3, ContractAddress);
 
             return await service.GetDeployedContractsQueryAsync();
         }
 
         public async Task<TransactionReceipt> ModelContractAddModel(string modelContractAddress)
         {
-            var _contractAddress = "0x2a212f50a2a020010ea88cc33fc4c333e6a5c5c4";
-            var service = new ModelFactoryService(_web3, _contractAddress);
+            var service = new ModelFactoryService(_web3, ContractAddress);
 
             var modelContractAddModelFunction = new ModelContractAddModelFunction()
             {
@@ -108,8 +99,7 @@ namespace EthereumLib
 
         public async Task<List<Model>> ModelContractGetModels(string modelContractAddress)
         {
-            var _contractAddress = "0x2a212f50a2a020010ea88cc33fc4c333e6a5c5c4";
-            var service = new ModelFactoryService(_web3, _contractAddress);
+            var service = new ModelFactoryService(_web3, ContractAddress);
 
             var ModelContractGetModelsFunction = new ModelContractGetModelsFunction()
             {
@@ -123,8 +113,7 @@ namespace EthereumLib
 
         public async Task<Model> ModelContractIdToModel(string modelContractAddress, string modelId)
         {
-            var _contractAddress = "0x2a212f50a2a020010ea88cc33fc4c333e6a5c5c4";
-            var service = new ModelFactoryService(_web3, _contractAddress);
+            var service = new ModelFactoryService(_web3, ContractAddress);
 
             var modelContractIdToModelFunction = new ModelContractIdToModelFunction()
             {

@@ -6,6 +6,8 @@ namespace BlockchainWEB.Services
 {
     public class BlockchainService : IBlockchainService
     {
+
+        public bool IsReady { get => _blockchainManager != null; }
         private readonly BlockchainManager _blockchainManager;
         public BlockchainService()
         {   

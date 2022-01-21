@@ -6,5 +6,6 @@ namespace BlockchainWEB.Services
     public interface IBlockchainService
     {
         Task<BigInteger> GetBlockNumber();
+        bool IsReady { get; }
     }
 }

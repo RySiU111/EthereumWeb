@@ -24,10 +24,10 @@ namespace NethereumConsole
             System.Console.WriteLine(await blockchainManager.GetBlockNumber());
             
 
-            foreach(var a in await blockchainManager.GetAccounts())
-            {
-                System.Console.WriteLine(a);
-            }
+            // foreach(var a in await blockchainManager.GetAccounts())
+            // {
+            //     System.Console.WriteLine(a);
+            // }
 
             var cancellationToken = new CancellationToken();
             await blockchainManager.GetBlocks(10, cancellationToken);
@@ -38,18 +38,18 @@ namespace NethereumConsole
             // var transactionReceipt1 = await blockchainManager.DeployModelContract();
             // System.Console.WriteLine(JsonSerializer.Serialize(transactionReceipt1));
 
-            var deployedContracts = await blockchainManager.GetDeployedModelContracts();
-            System.Console.WriteLine(JsonSerializer.Serialize(deployedContracts));
+            // var deployedContracts = await blockchainManager.GetDeployedModelContracts();
+            // System.Console.WriteLine(JsonSerializer.Serialize(deployedContracts));
 
             // var transactionReceipt2 = await blockchainManager.ModelContractAddModel(deployedContracts[0]);
             // System.Console.WriteLine(JsonSerializer.Serialize(transactionReceipt2));
 
 
-            var models = await blockchainManager.ModelContractGetModels(deployedContracts[0]);
-            System.Console.WriteLine(JsonSerializer.Serialize(models));
+            // var models = await blockchainManager.ModelContractGetModels(deployedContracts[0]);
+            // System.Console.WriteLine(JsonSerializer.Serialize(models));
 
-            var model = await blockchainManager.ModelContractIdToModel(deployedContracts[0], models[0].Id);
-            System.Console.WriteLine(JsonSerializer.Serialize(model));
+            // var model = await blockchainManager.ModelContractIdToModel(deployedContracts[0], models[0].Id);
+            // System.Console.WriteLine(JsonSerializer.Serialize(model));
 
             // var transactions = new List<TransactionReceiptVO>();
             // var filterLogs = new List<FilterLogVO>();
